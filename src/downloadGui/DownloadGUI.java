@@ -1,0 +1,172 @@
+package downloadGui;
+
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.JFileChooser;
+import javax.swing.JTextField;
+import javax.swing.JLabel;
+import javax.swing.JButton;
+import javax.swing.JList;
+import javax.swing.BoxLayout;
+
+import downloader.FileDownloader;
+
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+
+import javax.swing.JScrollPane;
+
+public class DownloadGUI extends JFrame {
+
+	private JPanel contentPane;
+	private JTextField urlTxt;
+	private JTextField saveLocationTxt;
+	private JTextField filterTxt;
+	private JTextField threadsTxt;
+
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					DownloadGUI frame = new DownloadGUI();
+					frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	/**
+	 * Create the frame.
+	 */
+	public DownloadGUI() {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 1053, 603);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(new BorderLayout(0, 0));
+
+		JPanel northPanel = new JPanel();
+		contentPane.add(northPanel, BorderLayout.NORTH);
+		northPanel.setLayout(new BoxLayout(northPanel, BoxLayout.Y_AXIS));
+
+		JPanel panel_1 = new JPanel();
+		northPanel.add(panel_1);
+
+		JLabel lblNewLabel = new JLabel("Webpage URL");
+		panel_1.add(lblNewLabel);
+
+		urlTxt = new JTextField();
+		panel_1.add(urlTxt);
+		urlTxt.setColumns(30);
+
+		JPanel panel = new JPanel();
+		panel_1.add(panel);
+
+		JLabel lblNewLabel_2 = new JLabel("Filter");
+		panel.add(lblNewLabel_2);
+
+		filterTxt = new JTextField();
+		panel.add(filterTxt);
+		filterTxt.setColumns(10);
+
+		JLabel lblNewLabel_1 = new JLabel("Save Location");
+		panel_1.add(lblNewLabel_1);
+
+		saveLocationTxt = new JTextField();
+		panel_1.add(saveLocationTxt);
+		saveLocationTxt.setColumns(30);
+
+		JButton btnNewButton = new JButton("Browse");
+		panel_1.add(btnNewButton);
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser chooser = new JFileChooser();
+				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				int returnVal = chooser.showOpenDialog(getParent());
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					saveLocationTxt.setText(chooser.getSelectedFile()
+							.getAbsolutePath());
+				}
+			}
+		});
+
+		JPanel panel_2 = new JPanel();
+		northPanel.add(panel_2);
+
+		JPanel panel_3 = new JPanel();
+		panel_2.add(panel_3);
+
+
+
+		JPanel panel_4 = new JPanel();
+		panel_3.add(panel_4);
+
+		JLabel lblNewLabel_3 = new JLabel("Number of Threads");
+		panel_4.add(lblNewLabel_3);
+
+		threadsTxt = new JTextField();
+		panel_4.add(threadsTxt);
+		threadsTxt.setColumns(10);
+
+		JScrollPane scrollPane = new JScrollPane();
+		contentPane.add(scrollPane, BorderLayout.SOUTH);
+
+		JList list = new JList();
+		contentPane.add(list, BorderLayout.CENTER);
+		
+		//runs when the download button is clicked.
+		JButton downloadButton = new JButton("Download");
+		downloadButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (makeChecks()) {
+					String url = urlTxt.getText();
+					String saveLoc = saveLocationTxt.getText();
+					int numThreads = Integer.parseInt(threadsTxt.getText());
+					String filter = filterTxt.getText();
+
+					FileDownloader fd = new FileDownloader(url, saveLoc,
+							numThreads, filter);
+					try {
+						fd.download();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+		panel_3.add(downloadButton);
+	}
+
+	/**
+	 * Checks several conditions have been met before attempting to download the
+	 * files from the URL.
+	 * 
+	 * @return whether or not all of the checks have been passed.
+	 */
+	private boolean makeChecks() {
+		// check that the number of threads has been entered greater than 0
+		// and that there are no characters.
+		if (!threadsTxt.getText().equals("")
+				&& threadsTxt.getText().replaceAll("[a-z]", "")
+						.equals(threadsTxt.getText())) {
+			return true;
+		}
+		System.out.println("Please check everything");
+		return false;
+
+	}
+
+}
