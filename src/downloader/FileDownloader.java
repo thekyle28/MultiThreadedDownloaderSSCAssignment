@@ -1,5 +1,6 @@
 package downloader;
 
+import java.awt.Container;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -7,6 +8,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,13 +30,16 @@ public class FileDownloader {
 	private String saveLoc;
 	private int numThreads;
 	private String filter;
+	private DownloadGUI gui;
+	
 
 	public FileDownloader(String url, String saveLoc, int numThreads,
-			String filter) {
+			String filter, DownloadGUI downloadGUI) {
 		this.url = url;
 		this.saveLoc = saveLoc;
 		this.numThreads = numThreads;
 		this.filter = filter;
+		this.gui = downloadGUI;
 	}
 
 	class Download implements Runnable {
@@ -83,6 +91,16 @@ public class FileDownloader {
 			doc = Jsoup.connect(url).get();
 			//grab all of the images on the webpage with the file extension the user defined.
 			Elements imgs = doc.select("img[src~=(?i)\\.(" + filter + ")]");
+			//create an array list to store the image src attribute names.
+			ArrayList<String> imgName = new ArrayList<>();
+			//add the attribute names to the arraylist and convert it to an array.
+			for (Element img : imgs) {
+				imgName.add(img.attr("src"));
+			}
+			
+			Object[] imageArray = imgName.toArray();
+
+			System.out.println(imgName.toString());
 			// get all links
 			// Note: a hyper link object is defined using <a> tag, the the
 			// link is
@@ -91,6 +109,13 @@ public class FileDownloader {
 			// attribute
 			// [href],
 			Elements links = doc.select("a[href$=\"" + filter + "\"]");
+			
+
+			
+		
+			System.out.println(imageArray.toString());
+
+			gui.setList(imageArray);
 			
 
 			ExecutorService pool = Executors.newFixedThreadPool(numThreads);
@@ -122,10 +147,8 @@ public class FileDownloader {
 				
 				Download download = new Download(img, urlstr, fileName);
 				pool.submit(download);
-
-
-
 			}
+			pool.shutdown();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

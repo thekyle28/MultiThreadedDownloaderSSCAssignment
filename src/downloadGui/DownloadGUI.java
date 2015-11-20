@@ -1,12 +1,14 @@
 package downloadGui;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.AbstractListModel;
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
@@ -29,6 +31,7 @@ public class DownloadGUI extends JFrame {
 	private JTextField saveLocationTxt;
 	private JTextField filterTxt;
 	private JTextField threadsTxt;
+	private static JList<String> list;
 
 	/**
 	 * Launch the application.
@@ -124,7 +127,7 @@ public class DownloadGUI extends JFrame {
 		JScrollPane scrollPane = new JScrollPane();
 		contentPane.add(scrollPane, BorderLayout.SOUTH);
 
-		JList list = new JList();
+		list = new JList<String>();
 		contentPane.add(list, BorderLayout.CENTER);
 		
 		//runs when the download button is clicked.
@@ -138,7 +141,7 @@ public class DownloadGUI extends JFrame {
 					String filter = filterTxt.getText();
 
 					FileDownloader fd = new FileDownloader(url, saveLoc,
-							numThreads, filter);
+							numThreads, filter, DownloadGUI.this);
 					try {
 						fd.download();
 					} catch (IOException e) {
@@ -149,7 +152,7 @@ public class DownloadGUI extends JFrame {
 		});
 		panel_3.add(downloadButton);
 	}
-
+	
 	/**
 	 * Checks several conditions have been met before attempting to download the
 	 * files from the URL.
@@ -167,6 +170,20 @@ public class DownloadGUI extends JFrame {
 		System.out.println("Please check everything");
 		return false;
 
+	}
+	
+	public void setList(Object[] images){
+		 list.setModel(new AbstractListModel() {
+			//sets the values of the Jlist from the subjects arrayList in the main class. 
+			Object[] values = images;
+			public int getSize() {
+				return values.length;
+			}
+			public Object getElementAt(int index) { 
+				return values[index];
+			}
+
+		});
 	}
 
 }
