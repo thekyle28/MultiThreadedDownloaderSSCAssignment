@@ -24,7 +24,11 @@ import java.io.IOException;
 
 import javax.swing.JScrollPane;
 
-public class DownloadGUI extends JFrame {
+import java.awt.Scrollbar;
+
+import javax.swing.JScrollBar;
+
+public class MainGUI extends JFrame {
 
 	private JPanel contentPane;
 	private JTextField urlTxt;
@@ -40,7 +44,7 @@ public class DownloadGUI extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					DownloadGUI frame = new DownloadGUI();
+					MainGUI frame = new MainGUI();
 					frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 					frame.setVisible(true);
 				} catch (Exception e) {
@@ -53,7 +57,7 @@ public class DownloadGUI extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public DownloadGUI() {
+	public MainGUI() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 1053, 603);
 		contentPane = new JPanel();
@@ -123,16 +127,20 @@ public class DownloadGUI extends JFrame {
 		threadsTxt = new JTextField();
 		panel_4.add(threadsTxt);
 		threadsTxt.setColumns(10);
-
-		JScrollPane scrollPane = new JScrollPane();
-		contentPane.add(scrollPane, BorderLayout.SOUTH);
-
-		list = new JList<String>();
-		contentPane.add(list, BorderLayout.CENTER);
 		
 		//runs when the download button is clicked.
 		JButton downloadButton = new JButton("Download");
 		downloadButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new DownloaderGUI(list.getSelectedValuesList()).setVisible(true);
+			}
+			
+		});
+		
+		JButton getFiles = new JButton("Get Files");
+		getFiles.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (makeChecks()) {
 					String url = urlTxt.getText();
@@ -141,7 +149,7 @@ public class DownloadGUI extends JFrame {
 					String filter = filterTxt.getText();
 
 					FileDownloader fd = new FileDownloader(url, saveLoc,
-							numThreads, filter, DownloadGUI.this);
+							numThreads, filter, MainGUI.this);
 					try {
 						fd.download();
 					} catch (IOException e) {
@@ -150,7 +158,11 @@ public class DownloadGUI extends JFrame {
 				}
 			}
 		});
+		panel_3.add(getFiles);
 		panel_3.add(downloadButton);
+				
+						list = new JList<String>();
+						contentPane.add(list, BorderLayout.CENTER);
 	}
 	
 	/**
@@ -172,18 +184,26 @@ public class DownloadGUI extends JFrame {
 
 	}
 	
-	public void setList(Object[] images){
+	public void setList(Object[] images, Object[] linkArray){
 		 list.setModel(new AbstractListModel() {
 			//sets the values of the Jlist from the subjects arrayList in the main class. 
-			Object[] values = images;
+			Object[] files = concat(images, linkArray);
+			Object[] values = files;
 			public int getSize() {
 				return values.length;
 			}
 			public Object getElementAt(int index) { 
 				return values[index];
 			}
-
 		});
 	}
+	public Object[] concat(Object[] a, Object[] b) {
+		   int aLen = a.length;
+		   int bLen = b.length;
+		   Object[] c= new Object[aLen+bLen];
+		   System.arraycopy(a, 0, c, 0, aLen);
+		   System.arraycopy(b, 0, c, aLen, bLen);
+		   return c;
+		}
 
 }

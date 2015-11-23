@@ -22,7 +22,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import downloadGui.DownloadGUI;
+import downloadGui.MainGUI;
 
 public class FileDownloader {
 
@@ -30,11 +30,11 @@ public class FileDownloader {
 	private String saveLoc;
 	private int numThreads;
 	private String filter;
-	private DownloadGUI gui;
+	private MainGUI gui;
 	
 
 	public FileDownloader(String url, String saveLoc, int numThreads,
-			String filter, DownloadGUI downloadGUI) {
+			String filter, MainGUI downloadGUI) {
 		this.url = url;
 		this.saveLoc = saveLoc;
 		this.numThreads = numThreads;
@@ -59,9 +59,6 @@ public class FileDownloader {
 			// Open a URL Stream
 			URL url;
 			try {
-				System.out.println(Thread.currentThread().getName().toString()
-						+ ": " + Thread.currentThread().getState().toString());
-
 				url = new URL(urlstr);
 
 				InputStream in = url.openStream();
@@ -109,15 +106,17 @@ public class FileDownloader {
 			// attribute
 			// [href],
 			Elements links = doc.select("a[href$=\"" + filter + "\"]");
+			ArrayList<String> linkAL = new ArrayList<>();
+			for (Element link : links) {
+				linkAL.add(link.attr("href"));
+			}
 			
+			Object[] linkArray = linkAL.toArray();
 
+			gui.setList(imageArray, linkArray);
 			
-		
-			System.out.println(imageArray.toString());
-
-			gui.setList(imageArray);
-			
-
+			// Step 1: create an a fix thread pool of size that the user
+			// specified.
 			ExecutorService pool = Executors.newFixedThreadPool(numThreads);
 
 			//for each link 
@@ -127,7 +126,8 @@ public class FileDownloader {
 				// get the value from href attribute: link.attr("href")
 				System.out.println("\nlink : " + link.attr("href"));
 				System.out.println("text : " + link.text());
-
+				
+				
 			}
 			
 			for (Element img : imgs) {
@@ -142,11 +142,10 @@ public class FileDownloader {
 				String fileName = urlstr.substring(urlstr.lastIndexOf('/') + 1,
 						urlstr.length());
 
-				// Step 1: create an a fix thread pool of size that the user
-				// specified.
-				
+		
 				Download download = new Download(img, urlstr, fileName);
 				pool.submit(download);
+				
 			}
 			pool.shutdown();
 		} catch (IOException e) {
