@@ -36,6 +36,7 @@ public class MainGUI extends JFrame {
 	private JTextField filterTxt;
 	private JTextField threadsTxt;
 	private static JList<String> list;
+	private static FileDownloader fd;
 
 	/**
 	 * Launch the application.
@@ -134,7 +135,7 @@ public class MainGUI extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new DownloaderGUI(list.getSelectedValuesList()).setVisible(true);
+				new DownloaderGUI(list.getSelectedValuesList(), fd).setVisible(true);
 			}
 			
 		});
@@ -148,22 +149,36 @@ public class MainGUI extends JFrame {
 					int numThreads = Integer.parseInt(threadsTxt.getText());
 					String filter = filterTxt.getText();
 
-					FileDownloader fd = new FileDownloader(url, saveLoc,
+					fd = new FileDownloader(url, saveLoc,
 							numThreads, filter, MainGUI.this);
 					try {
-						fd.download();
+						fd.getFiles();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
 			}
 		});
+		
+		JButton selectAll = new JButton("Select All");
+		selectAll.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int start = 0;
+			    int end = list.getModel().getSize() - 1;
+			    if (end >= 0) {
+			      list.setSelectionInterval(start, end);
+			    }
+			}
+		});
+		panel_3.add(selectAll);
 		panel_3.add(getFiles);
 		panel_3.add(downloadButton);
 				
 						list = new JList<String>();
 						contentPane.add(list, BorderLayout.CENTER);
+						
 	}
+	
 	
 	/**
 	 * Checks several conditions have been met before attempting to download the

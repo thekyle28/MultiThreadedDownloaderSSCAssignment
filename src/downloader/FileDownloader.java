@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +23,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import downloadGui.DownloaderGUI;
 import downloadGui.MainGUI;
 
 public class FileDownloader {
@@ -31,7 +33,8 @@ public class FileDownloader {
 	private int numThreads;
 	private String filter;
 	private MainGUI gui;
-	
+	private static Elements links;
+	private static Elements imgs;
 
 	public FileDownloader(String url, String saveLoc, int numThreads,
 			String filter, MainGUI downloadGUI) {
@@ -40,6 +43,9 @@ public class FileDownloader {
 		this.numThreads = numThreads;
 		this.filter = filter;
 		this.gui = downloadGUI;
+		imgs = new Elements();
+		links = new Elements();
+
 	}
 
 	class Download implements Runnable {
@@ -47,11 +53,19 @@ public class FileDownloader {
 		private Element file;
 		private String urlstr;
 		private String fileName;
+		private boolean isImage;
 
-		public Download(Element file, String urlstr, String fileName) {
+		/** Constructor initialises variables.
+		 * @param file The element that is being used
+		 * @param urlstr The full url string that will be used to download
+		 * @param fileName The name for the file, where it will be stored.
+		 * @param isImage whether or not the file is an image.
+		 */
+		public Download(Element file, String urlstr, String fileName, boolean isImage) {
 			this.file = file;
 			this.urlstr = urlstr;
 			this.fileName = fileName;
+			this.isImage = isImage;
 		}
 
 		public void run() {
@@ -62,11 +76,24 @@ public class FileDownloader {
 				url = new URL(urlstr);
 
 				InputStream in = url.openStream();
+				if(isImage){
+					DownloaderGUI.setStatus(file.attr("src"), "DOWNLOADING...");
+				}
+				else{
+					DownloaderGUI.setStatus(file.attr("href"), "DOWNLOADING...");
+				}
 				OutputStream out = new BufferedOutputStream(
 						new FileOutputStream(saveLoc + fileName));
 				System.out.println(saveLoc + fileName);
 				for (int b; (b = in.read()) != -1;) {
 					out.write(b);
+				}
+				if(isImage){
+					DownloaderGUI.setStatus(fileName, "DONE");
+				}
+				else{
+					DownloaderGUI.setStatus(file.attr("href"), "DONE");
+					System.out.println(file.attr("href"));
 				}
 				out.close();
 				in.close();
@@ -80,24 +107,41 @@ public class FileDownloader {
 		}
 	}
 
-	public void download() throws IOException {
+	public void getFiles() throws IOException {
 
 		Document doc;
 		try {
-			//connect to the webpage
+			// connect to the webpage
 			doc = Jsoup.connect(url).get();
-			//grab all of the images on the webpage with the file extension the user defined.
-			Elements imgs = doc.select("img[src~=(?i)\\.(" + filter + ")]");
-			//create an array list to store the image src attribute names.
+			// split the filters using | into an array for multiple filter file
+			// types.
+			String[] filters = filter.split("|");
+			// grab all of the images on the webpage with the file extension the
+			// user defined.
+
+			for (int i = 0; i < filters.length; i++) {
+				Elements images = doc.select("img[src~=(?i)\\.(" + filters[i]
+						+ ")]");
+				// for each element check if it is already in the list of
+				// elements,
+				// if not then add it to the collection of elements.
+				for (Element element : images) {
+					if (!imgs.contains(element)) {
+						imgs.add(element);
+					}
+				}
+			}
+
+			// create an array list to store the image src attribute names.
 			ArrayList<String> imgName = new ArrayList<>();
-			//add the attribute names to the arraylist and convert it to an array.
+			// add the attribute names to the arraylist and convert it to an
+			// array.
 			for (Element img : imgs) {
 				imgName.add(img.attr("src"));
 			}
-			
+
 			Object[] imageArray = imgName.toArray();
 
-			System.out.println(imgName.toString());
 			// get all links
 			// Note: a hyper link object is defined using <a> tag, the the
 			// link is
@@ -105,51 +149,99 @@ public class FileDownloader {
 			// We use selector to search elements a hyper link object with
 			// attribute
 			// [href],
-			Elements links = doc.select("a[href$=\"" + filter + "\"]");
+
+			for (int i = 0; i < filters.length; i++) {
+				Elements links = doc.select("a[href$=\"" + filters[i] + "\"]");
+				// for each element check if it is already in the list of
+				// elements,
+				// if not then add it to the collection of elements.
+				for (Element element : links) {
+					if (!FileDownloader.links.contains(element)) {
+						FileDownloader.links.add(element);
+					}
+				}
+			}
+
 			ArrayList<String> linkAL = new ArrayList<>();
 			for (Element link : links) {
 				linkAL.add(link.attr("href"));
 			}
-			
+
 			Object[] linkArray = linkAL.toArray();
 
 			gui.setList(imageArray, linkArray);
-			
-			// Step 1: create an a fix thread pool of size that the user
-			// specified.
-			ExecutorService pool = Executors.newFixedThreadPool(numThreads);
 
-			//for each link 
-			for (Element link : links) {
-				System.out.println(Thread.currentThread().getName().toString()
-						+ ": " + Thread.currentThread().getState().toString());
-				// get the value from href attribute: link.attr("href")
-				System.out.println("\nlink : " + link.attr("href"));
-				System.out.println("text : " + link.text());
-				
-				
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void download(List<String> list) throws IOException {
+		// Step 1: create an a fix thread pool of size that the user
+		// specified.
+		ExecutorService pool = Executors.newFixedThreadPool(numThreads);
+
+		Document doc = Jsoup.connect(url).get();
+		// used to iterate through to add the elements whose href or
+		// image source match the list
+		Elements imgs = doc.getElementsByTag("img");
+
+		Elements files = new Elements();
+		for (Element img : imgs) {
+			if (list.contains(img.attr("src"))) {
+				files.add(img);
 			}
-			
-			for (Element img : imgs) {
+		}
+
+		Elements lnks = doc.getElementsByTag("a");
+		lnks.addAll(doc.getElementsByTag("link"));
+		for (Element lnk : lnks) {
+			if (list.contains(lnk.attr("href"))) {
+				files.add(lnk);
+			}
+		}
+
+		// for each file selected
+		for (Element file : files) {
+			System.out.println(Thread.currentThread().getName().toString()
+					+ ": " + Thread.currentThread().getState().toString());
+			// get the value from href attribute: link.attr("href")
+			System.out.println("\nlink : " + file.attr("href"));
+			System.out.println("text : " + file.text());
+			// if the file is an image then
+			if (file.tagName() == "img") {
 				System.out.println(Thread.currentThread().getName().toString()
 						+ ": " + Thread.currentThread().getState().toString());
-				String urlstr = img.attr("src");
+				String urlstr = file.attr("src");
+				System.out.println(urlstr);
+				if (urlstr.indexOf(url) <= 0)
+					urlstr = url + urlstr;
+				System.out.println(urlstr);
+				
+				//get the file name by grabbing a substring of the url
+				String fileName = urlstr.substring(urlstr.lastIndexOf('/') + 1,
+						urlstr.length());
+
+				Download download = new Download(file, urlstr, fileName, true);
+				pool.submit(download);
+			}
+			// else it is a link or file
+			else {
+				String urlstr = file.attr("src");
 				System.out.println(urlstr);
 				if (urlstr.indexOf(url) <= 0)
 					urlstr = url + urlstr;
 				System.out.println(urlstr);
 
-				String fileName = urlstr.substring(urlstr.lastIndexOf('/') + 1,
-						urlstr.length());
+				String fileName = urlstr.replaceAll("/", "");
 
-		
-				Download download = new Download(img, urlstr, fileName);
+				Download download = new Download(file, urlstr, fileName, false);
 				pool.submit(download);
-				
+
 			}
-			pool.shutdown();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
+
+
+		pool.shutdown();
 	}
 }
