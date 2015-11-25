@@ -117,8 +117,6 @@ public class MainGUI extends JFrame {
 		JPanel panel_3 = new JPanel();
 		panel_2.add(panel_3);
 
-
-
 		JPanel panel_4 = new JPanel();
 		panel_3.add(panel_4);
 
@@ -128,18 +126,19 @@ public class MainGUI extends JFrame {
 		threadsTxt = new JTextField();
 		panel_4.add(threadsTxt);
 		threadsTxt.setColumns(10);
-		
-		//runs when the download button is clicked.
+
+		// runs when the download button is clicked.
 		JButton downloadButton = new JButton("Download");
 		downloadButton.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new DownloaderGUI(list.getSelectedValuesList(), fd).setVisible(true);
+				new DownloaderGUI(list.getSelectedValuesList(), fd)
+						.setVisible(true);
 			}
-			
+
 		});
-		
+
 		JButton getFiles = new JButton("Get Files");
 		getFiles.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -149,8 +148,8 @@ public class MainGUI extends JFrame {
 					int numThreads = Integer.parseInt(threadsTxt.getText());
 					String filter = filterTxt.getText();
 
-					fd = new FileDownloader(url, saveLoc,
-							numThreads, filter, MainGUI.this);
+					fd = new FileDownloader(url, saveLoc, numThreads, filter,
+							MainGUI.this);
 					try {
 						fd.getFiles();
 					} catch (IOException e) {
@@ -159,27 +158,30 @@ public class MainGUI extends JFrame {
 				}
 			}
 		});
-		
+		panel_3.add(getFiles);
+
 		JButton selectAll = new JButton("Select All");
 		selectAll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				int start = 0;
-			    int end = list.getModel().getSize() - 1;
-			    if (end >= 0) {
-			      list.setSelectionInterval(start, end);
-			    }
+				int end = list.getModel().getSize() - 1;
+				if (end >= 0) {
+					list.setSelectionInterval(start, end);
+				}
 			}
 		});
 		panel_3.add(selectAll);
-		panel_3.add(getFiles);
 		panel_3.add(downloadButton);
-				
-						list = new JList<String>();
-						contentPane.add(list, BorderLayout.CENTER);
-						
+
+		list = new JList<String>();
+		contentPane.add(list, BorderLayout.CENTER);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		contentPane.add(scrollPane, BorderLayout.CENTER);
+		scrollPane.setViewportView(list);
+
 	}
-	
-	
+
 	/**
 	 * Checks several conditions have been met before attempting to download the
 	 * files from the URL.
@@ -198,27 +200,31 @@ public class MainGUI extends JFrame {
 		return false;
 
 	}
-	
-	public void setList(Object[] images, Object[] linkArray){
-		 list.setModel(new AbstractListModel() {
-			//sets the values of the Jlist from the subjects arrayList in the main class. 
+
+	public void setList(Object[] images, Object[] linkArray) {
+		list.setModel(new AbstractListModel() {
+			// sets the values of the Jlist from the subjects arrayList in the
+			// main class.
 			Object[] files = concat(images, linkArray);
 			Object[] values = files;
+
 			public int getSize() {
 				return values.length;
 			}
-			public Object getElementAt(int index) { 
+
+			public Object getElementAt(int index) {
 				return values[index];
 			}
 		});
 	}
+
 	public Object[] concat(Object[] a, Object[] b) {
-		   int aLen = a.length;
-		   int bLen = b.length;
-		   Object[] c= new Object[aLen+bLen];
-		   System.arraycopy(a, 0, c, 0, aLen);
-		   System.arraycopy(b, 0, c, aLen, bLen);
-		   return c;
-		}
+		int aLen = a.length;
+		int bLen = b.length;
+		Object[] c = new Object[aLen + bLen];
+		System.arraycopy(a, 0, c, 0, aLen);
+		System.arraycopy(b, 0, c, aLen, bLen);
+		return c;
+	}
 
 }

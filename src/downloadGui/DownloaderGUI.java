@@ -17,6 +17,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import downloader.FileDownloader;
+import javax.swing.JScrollPane;
 
 public class DownloaderGUI extends JFrame {
 
@@ -42,8 +43,8 @@ public class DownloaderGUI extends JFrame {
 
 	/**
 	 * Create the frame.
-	 * @param fd 
-	 * @param objects 
+	 * @param fd The fileDownloader object that will download the files
+	 * @param list The list of files to be downloaded. 
 	 */
 	public DownloaderGUI(List<String> list, FileDownloader fd) {
 		setBounds(100, 100, 953, 660);
@@ -59,9 +60,6 @@ public class DownloaderGUI extends JFrame {
 		panel.add(lblNewLabel);
 		lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 17));
 		lblNewLabel.setBackground(Color.LIGHT_GRAY);
-		
-		table = new JTable();
-		table.setBackground(Color.WHITE);
 		//create a default table model for the table
 		DefaultTableModel model = new DefaultTableModel();
 		
@@ -75,8 +73,15 @@ public class DownloaderGUI extends JFrame {
 		String [] columnIdentifiers = new String[] {"File", "Download Status"};
 		
 		model.setDataVector(files2D, columnIdentifiers);
+				
+		table = new JTable();
+		table.setBackground(Color.WHITE);
 		table.setModel(model);
-		contentPane.add(table, BorderLayout.CENTER);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		contentPane.add(scrollPane, BorderLayout.CENTER);
+		scrollPane.setViewportView(table);
+	
 		
 		try {
 			fd.download(list);
@@ -90,10 +95,8 @@ public class DownloaderGUI extends JFrame {
 		System.out.println("Comparing " + fileName + " to...");
 		for (int i = 0; i < table.getRowCount(); i++) {
 			
-			System.out.println(table.getValueAt(i, 1).toString());
 			
 			if(table.getValueAt(i, 0).toString().equals(fileName)){
-				System.out.println("I'm here!");
 
 				table.setValueAt(status, i, 1);		
 			}

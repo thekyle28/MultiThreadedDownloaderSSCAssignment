@@ -2,6 +2,7 @@ package downloader;
 
 import java.awt.Container;
 import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,10 @@ import org.jsoup.select.Elements;
 import downloadGui.DownloaderGUI;
 import downloadGui.MainGUI;
 
+/** Retrieves and downloads the files from the webpage specified by the user.
+ * @author Kyle Allen-Taylor
+ *
+ */
 public class FileDownloader {
 
 	private String url;
@@ -36,6 +41,13 @@ public class FileDownloader {
 	private static Elements links;
 	private static Elements imgs;
 
+	/** Retrieves and downloads the files from the webpage specified.
+	 * @param url The URL of the webpage that the user wishes to download the files from.
+	 * @param saveLoc The location on the user's computer that they wish to download the files to
+	 * @param numThreads The number of threads the user wishes to use in the thread pool to download the files.
+	 * @param filter The filter words for the file extension of the files that the user wishes to download.
+	 * @param downloadGUI The GUI that will be updated, this should be the main GUI.
+	 */
 	public FileDownloader(String url, String saveLoc, int numThreads,
 			String filter, MainGUI downloadGUI) {
 		this.url = url;
@@ -48,6 +60,10 @@ public class FileDownloader {
 
 	}
 
+	/** The class that implements the threads run method.
+	 * @author Kyle
+	 *
+	 */
 	class Download implements Runnable {
 
 		private Element file;
@@ -68,13 +84,19 @@ public class FileDownloader {
 			this.isImage = isImage;
 		}
 
+		/* (non-Javadoc)
+		 * @see java.lang.Runnable#run()
+		 */
 		public void run() {
 
 			// Open a URL Stream
 			URL url;
 			try {
+				System.out.println("urlstr: " + urlstr);
 				url = new URL(urlstr);
-
+				System.out.println("url: " + url.toString());
+				System.out.println("fileName: " + fileName.toString());
+				
 				InputStream in = url.openStream();
 				if(isImage){
 					DownloaderGUI.setStatus(file.attr("src"), "DOWNLOADING...");
@@ -89,7 +111,7 @@ public class FileDownloader {
 					out.write(b);
 				}
 				if(isImage){
-					DownloaderGUI.setStatus(fileName, "DONE");
+					DownloaderGUI.setStatus(file.attr("src"), "DONE");
 				}
 				else{
 					DownloaderGUI.setStatus(file.attr("href"), "DONE");
@@ -97,16 +119,21 @@ public class FileDownloader {
 				}
 				out.close();
 				in.close();
-				System.out.println(Thread.currentThread().getName().toString()
-						+ ": " + Thread.currentThread().getState().toString());
 
-			} catch (IOException e1) {
+			}catch (FileNotFoundException e1 ) {
+				DownloaderGUI.setStatus(file.attr("href"), "Cannot Download");
 				e1.printStackTrace();
-
+			}			
+			catch (IOException e1 ) {
+				DownloaderGUI.setStatus(file.attr("href"), "Cannot Download");
+				e1.printStackTrace();
 			}
 		}
 	}
 
+	/** Retrieves the files from the webpage.
+	 * @throws IOException
+	 */
 	public void getFiles() throws IOException {
 
 		Document doc;
@@ -115,7 +142,7 @@ public class FileDownloader {
 			doc = Jsoup.connect(url).get();
 			// split the filters using | into an array for multiple filter file
 			// types.
-			String[] filters = filter.split("|");
+			String[] filters = filter.split(",");
 			// grab all of the images on the webpage with the file extension the
 			// user defined.
 
@@ -176,6 +203,10 @@ public class FileDownloader {
 		}
 	}
 
+	/** Downloads the files passed to it from the webpage onto the user's computer
+	 * @param list The list of files to be downloaded, passed from the main GUI as the user's selection of files.
+	 * @throws IOException
+	 */
 	public void download(List<String> list) throws IOException {
 		// Step 1: create an a fix thread pool of size that the user
 		// specified.
@@ -195,6 +226,7 @@ public class FileDownloader {
 
 		Elements lnks = doc.getElementsByTag("a");
 		lnks.addAll(doc.getElementsByTag("link"));
+		System.out.println(lnks);
 		for (Element lnk : lnks) {
 			if (list.contains(lnk.attr("href"))) {
 				files.add(lnk);
@@ -203,20 +235,17 @@ public class FileDownloader {
 
 		// for each file selected
 		for (Element file : files) {
-			System.out.println(Thread.currentThread().getName().toString()
-					+ ": " + Thread.currentThread().getState().toString());
+		
 			// get the value from href attribute: link.attr("href")
 			System.out.println("\nlink : " + file.attr("href"));
 			System.out.println("text : " + file.text());
 			// if the file is an image then
 			if (file.tagName() == "img") {
-				System.out.println(Thread.currentThread().getName().toString()
-						+ ": " + Thread.currentThread().getState().toString());
-				String urlstr = file.attr("src");
+
+				String urlstr = file.attr("abs:src");
 				System.out.println(urlstr);
-				if (urlstr.indexOf(url) <= 0)
-					urlstr = url + urlstr;
-				System.out.println(urlstr);
+//				if (urlstr.indexOf(url) <= 0)
+//					urlstr = url + urlstr;
 				
 				//get the file name by grabbing a substring of the url
 				String fileName = urlstr.substring(urlstr.lastIndexOf('/') + 1,
@@ -227,14 +256,14 @@ public class FileDownloader {
 			}
 			// else it is a link or file
 			else {
-				String urlstr = file.attr("src");
+				String urlstr = file.attr("abs:href");
 				System.out.println(urlstr);
-				if (urlstr.indexOf(url) <= 0)
-					urlstr = url + urlstr;
+//				if (urlstr.indexOf(url) <= 0)
+//					urlstr = url + urlstr;
 				System.out.println(urlstr);
 
-				String fileName = urlstr.replaceAll("/", "");
-
+				String fileName = urlstr.substring(urlstr.lastIndexOf('/') + 1,
+						urlstr.length());
 				Download download = new Download(file, urlstr, fileName, false);
 				pool.submit(download);
 
