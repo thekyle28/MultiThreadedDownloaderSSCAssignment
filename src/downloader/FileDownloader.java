@@ -249,7 +249,7 @@ public class FileDownloader {
 				
 				//get the file name by grabbing a substring of the url
 				String fileName = urlstr.substring(urlstr.lastIndexOf('/') + 1,
-						urlstr.length());
+						urlstr.length()).replace("?", "").replace(">", "").replace("<", "");
 
 				Download download = new Download(file, urlstr, fileName, true);
 				pool.submit(download);
@@ -263,7 +263,7 @@ public class FileDownloader {
 				System.out.println(urlstr);
 
 				String fileName = urlstr.substring(urlstr.lastIndexOf('/') + 1,
-						urlstr.length());
+						urlstr.length()).replace("?", "").replace(">", "").replace("<", "");;
 				Download download = new Download(file, urlstr, fileName, false);
 				pool.submit(download);
 

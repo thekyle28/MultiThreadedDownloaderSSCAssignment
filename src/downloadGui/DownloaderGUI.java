@@ -75,6 +75,7 @@ public class DownloaderGUI extends JFrame {
 		model.setDataVector(files2D, columnIdentifiers);
 				
 		table = new JTable();
+		table.setEnabled(false);
 		table.setBackground(Color.WHITE);
 		table.setModel(model);
 		
@@ -92,7 +93,6 @@ public class DownloaderGUI extends JFrame {
 	}
 	
 	public static void setStatus(String fileName, String status){
-		System.out.println("Comparing " + fileName + " to...");
 		for (int i = 0; i < table.getRowCount(); i++) {
 			
 			
